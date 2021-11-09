@@ -2,6 +2,9 @@
 name = "digu"
 version = "0.0.1"
 edition = "2021"
+authors = ["Umran Hussein <umran.hussein@gmail.com>"]
+description = "a crate to generate state machines enforced at compile time"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
