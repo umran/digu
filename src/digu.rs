@@ -1,19 +1,20 @@
-use super::card::Card;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
-struct Outcome {
-    digs: Vec<Vec<u8>>,
-    bag: Vec<u8>,
-    score: i32,
+pub struct Outcome {
+    pub digs: Vec<Vec<u8>>,
+    pub bag: Vec<u8>,
+    pub score: i32,
+    pub complete: bool,
 }
 
-fn score_hand(hand: [u8; 10]) -> i32 {
-    let mut working_set: HashSet<u8> = hand.to_vec().iter().copied().collect();
+pub fn score_hand(hand: &[u8; 10]) -> Outcome {
+    let working_set: HashSet<u8> = hand.to_vec().iter().copied().collect();
 
     let mut best_outcome = Outcome {
         digs: vec![],
         bag: working_set.iter().copied().collect(),
-        score: working_set.iter().fold(0, |acc, &v| acc + card_score(v)),
+        score: -working_set.iter().fold(0, |acc, &v| acc + card_score(v)),
+        complete: false,
     };
 
     let ten_c_fours = choose_fours(working_set.iter().copied().collect());
@@ -36,15 +37,41 @@ fn score_hand(hand: [u8; 10]) -> i32 {
 
                 let credits = credits + j.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
 
-                // tally total
-                let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
-                let score = credits - debits;
-                if score > best_outcome.score {
-                    best_outcome = Outcome {
-                        digs: vec![i.to_vec(), j.to_vec()],
-                        bag: working_set.iter().copied().collect(),
-                        score: score,
-                    };
+                // tally the final 3 cards
+                let three_c_threes = choose_threes(working_set.iter().copied().collect());
+                if !three_c_threes.is_empty() {
+                    for (_, k) in three_c_threes.iter().enumerate() {
+                        let mut working_set: HashSet<u8> = working_set.iter().copied().collect();
+                        working_set.remove(&k[0]);
+                        working_set.remove(&k[1]);
+                        working_set.remove(&k[2]);
+
+                        let credits =
+                            credits + k.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
+                        // tally total
+                        let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
+                        let score = credits - debits + 100; // plus 100 for completion
+                        if score > best_outcome.score {
+                            best_outcome = Outcome {
+                                digs: vec![i.to_vec(), j.to_vec(), k.to_vec()],
+                                bag: working_set.iter().copied().collect(),
+                                score: score,
+                                complete: true,
+                            };
+                        }
+                    }
+                } else {
+                    // tally total
+                    let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
+                    let score = credits - debits;
+                    if score > best_outcome.score {
+                        best_outcome = Outcome {
+                            digs: vec![i.to_vec(), j.to_vec()],
+                            bag: working_set.iter().copied().collect(),
+                            score: score,
+                            complete: false,
+                        };
+                    }
                 }
             }
         } else {
@@ -56,6 +83,7 @@ fn score_hand(hand: [u8; 10]) -> i32 {
                     digs: vec![i.to_vec()],
                     bag: working_set.iter().copied().collect(),
                     score: score,
+                    complete: false,
                 };
             }
         }
@@ -99,6 +127,7 @@ fn score_hand(hand: [u8; 10]) -> i32 {
                                 digs: vec![i.to_vec(), j.to_vec(), k.to_vec()],
                                 bag: working_set.iter().copied().collect(),
                                 score: score,
+                                complete: false,
                             };
                         }
                     }
@@ -111,6 +140,7 @@ fn score_hand(hand: [u8; 10]) -> i32 {
                             digs: vec![i.to_vec(), j.to_vec()],
                             bag: working_set.iter().copied().collect(),
                             score: score,
+                            complete: false,
                         };
                     }
                 }
@@ -124,12 +154,13 @@ fn score_hand(hand: [u8; 10]) -> i32 {
                     digs: vec![i.to_vec()],
                     bag: working_set.iter().copied().collect(),
                     score: score,
+                    complete: false,
                 };
             }
         }
     }
 
-    0
+    best_outcome
 }
 
 fn choose_threes(set: Vec<u8>) -> HashSet<[u8; 3]> {
@@ -207,10 +238,10 @@ fn is_seq_three(a: u8, b: u8, c: u8) -> bool {
     let b = sorted[1] % 13;
     let c = sorted[2] % 13;
 
-    if (a - b).pow(2) != 1 {
+    if a > b || (b - a) != 1 {
         return false;
     }
-    if (b - c).pow(2) != 1 {
+    if b > c || (c - b) != 1 {
         return false;
     }
 
@@ -230,13 +261,13 @@ fn is_seq_four(a: u8, b: u8, c: u8, d: u8) -> bool {
     let c = sorted[2] % 13;
     let d = sorted[3] % 13;
 
-    if (a - b).pow(2) != 1 {
+    if a > b || (b - a) != 1 {
         return false;
     }
-    if (b - c).pow(2) != 1 {
+    if b > c || (c - b) != 1 {
         return false;
     }
-    if (c - d).pow(2) != 1 {
+    if c > d || (d - c) != 1 {
         return false;
     }
 

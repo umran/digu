@@ -40,21 +40,39 @@ impl TryFrom<u8> for Value {
 }
 
 impl Value {
-    pub fn index(&self) -> u8 {
+    // pub fn index(&self) -> u8 {
+    //     match self {
+    //         Self::Two => 0,
+    //         Self::Three => 1,
+    //         Self::Four => 2,
+    //         Self::Five => 3,
+    //         Self::Six => 4,
+    //         Self::Seven => 5,
+    //         Self::Eight => 6,
+    //         Self::Nine => 7,
+    //         Self::Ten => 8,
+    //         Self::J => 9,
+    //         Self::Q => 10,
+    //         Self::K => 11,
+    //         Self::A => 12,
+    //     }
+    // }
+
+    pub fn name(&self) -> String {
         match self {
-            Self::Two => 0,
-            Self::Three => 1,
-            Self::Four => 2,
-            Self::Five => 3,
-            Self::Six => 4,
-            Self::Seven => 5,
-            Self::Eight => 6,
-            Self::Nine => 7,
-            Self::Ten => 8,
-            Self::J => 9,
-            Self::Q => 10,
-            Self::K => 11,
-            Self::A => 12,
+            Self::Two => String::from("2"),
+            Self::Three => String::from("3"),
+            Self::Four => String::from("4"),
+            Self::Five => String::from("5"),
+            Self::Six => String::from("6"),
+            Self::Seven => String::from("7"),
+            Self::Eight => String::from("8"),
+            Self::Nine => String::from("9"),
+            Self::Ten => String::from("10"),
+            Self::J => String::from("J"),
+            Self::Q => String::from("Q"),
+            Self::K => String::from("K"),
+            Self::A => String::from("A"),
         }
     }
 }
@@ -82,27 +100,41 @@ impl TryFrom<u8> for Card {
 }
 
 impl Card {
-    pub fn suit_index(&self) -> u8 {
-        match self {
-            Self::Diamonds(_) => 0,
-            Self::Hearts(_) => 1,
-            Self::Clubs(_) => 2,
-            Self::Spades(_) => 3,
-        }
+    pub fn new_from_index(index: u8) -> Result<Self, ()> {
+        let card: Self = index.try_into().map_err(|_| ())?;
+        Ok(card)
     }
 
-    pub fn value_index(&self) -> u8 {
-        match self {
-            Self::Diamonds(v) | Self::Hearts(v) | Self::Clubs(v) | Self::Spades(v) => v.index(),
-        }
-    }
+    // pub fn suit_index(&self) -> u8 {
+    //     match self {
+    //         Self::Diamonds(_) => 0,
+    //         Self::Hearts(_) => 1,
+    //         Self::Clubs(_) => 2,
+    //         Self::Spades(_) => 3,
+    //     }
+    // }
 
-    pub fn index(&self) -> u8 {
+    // pub fn value_index(&self) -> u8 {
+    //     match self {
+    //         Self::Diamonds(v) | Self::Hearts(v) | Self::Clubs(v) | Self::Spades(v) => v.index(),
+    //     }
+    // }
+
+    // pub fn index(&self) -> u8 {
+    //     match self {
+    //         Self::Diamonds(v) => v.index(),
+    //         Self::Hearts(v) => v.index() + 13,
+    //         Self::Clubs(v) => v.index() + 26,
+    //         Self::Spades(v) => v.index() + 39,
+    //     }
+    // }
+
+    pub fn name(&self) -> String {
         match self {
-            Self::Diamonds(v) => v.index(),
-            Self::Hearts(v) => v.index() + 13,
-            Self::Clubs(v) => v.index() + 26,
-            Self::Spades(v) => v.index() + 39,
+            Self::Diamonds(v) => format!("{} of Diamonds", v.name()),
+            Self::Hearts(v) => format!("{} of Hearts", v.name()),
+            Self::Clubs(v) => format!("{} of Clubs", v.name()),
+            Self::Spades(v) => format!("{} of Spades", v.name()),
         }
     }
 }
