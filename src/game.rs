@@ -126,7 +126,6 @@ impl Game {
                 }
             }
 
-            // do at end of every turn
             // check win condition
             let outcome = score_hand(hand);
             if outcome.complete {
