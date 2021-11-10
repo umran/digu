@@ -1,4 +1,4 @@
-mod card;
+pub mod card;
 mod digu;
 pub mod game;
 mod stack;

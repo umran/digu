@@ -32,6 +32,10 @@ impl Stack {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.cards.len()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.cards.len() == 0
     }
