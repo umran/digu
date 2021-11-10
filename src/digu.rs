@@ -1,20 +1,20 @@
 use std::collections::HashSet;
 
-pub struct Outcome {
+pub struct Score {
     pub digs: Vec<Vec<u8>>,
     pub bag: Vec<u8>,
-    pub score: i32,
-    pub complete: bool,
+    pub points: i32,
+    pub winner: bool,
 }
 
-pub fn score_hand(hand: &[u8; 10]) -> Outcome {
+pub fn eval_hand(hand: &[u8; 10]) -> Score {
     let working_set: HashSet<u8> = hand.to_vec().iter().copied().collect();
 
-    let mut best_outcome = Outcome {
+    let mut best_score = Score {
         digs: vec![],
         bag: working_set.iter().copied().collect(),
-        score: -working_set.iter().fold(0, |acc, &v| acc + card_score(v)),
-        complete: false,
+        points: -working_set.iter().fold(0, |acc, &v| acc + card_points(v)),
+        winner: false,
     };
 
     let ten_c_fours = choose_fours(working_set.iter().copied().collect());
@@ -25,7 +25,7 @@ pub fn score_hand(hand: &[u8; 10]) -> Outcome {
         working_set.remove(&i[2]);
         working_set.remove(&i[3]);
 
-        let credits = i.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
+        let credits = i.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
 
         let six_c_threes = choose_threes(working_set.iter().copied().collect());
         if !six_c_threes.is_empty() {
@@ -35,7 +35,7 @@ pub fn score_hand(hand: &[u8; 10]) -> Outcome {
                 working_set.remove(&j[1]);
                 working_set.remove(&j[2]);
 
-                let credits = credits + j.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
+                let credits = credits + j.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
 
                 // tally the final 3 cards
                 let three_c_threes = choose_threes(working_set.iter().copied().collect());
@@ -47,43 +47,44 @@ pub fn score_hand(hand: &[u8; 10]) -> Outcome {
                         working_set.remove(&k[2]);
 
                         let credits =
-                            credits + k.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
+                            credits + k.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
                         // tally total
-                        let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
-                        let score = credits - debits + 100; // plus 100 for completion
-                        if score > best_outcome.score {
-                            best_outcome = Outcome {
+                        let debits: i32 =
+                            working_set.iter().fold(0, |acc, &v| acc + card_points(v));
+                        let points = credits - debits + 100; // plus 100 for completion
+                        if points > best_score.points {
+                            best_score = Score {
                                 digs: vec![i.to_vec(), j.to_vec(), k.to_vec()],
                                 bag: working_set.iter().copied().collect(),
-                                score: score,
-                                complete: true,
+                                points: points,
+                                winner: true,
                             };
                         }
                     }
                 } else {
                     // tally total
-                    let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
-                    let score = credits - debits;
-                    if score > best_outcome.score {
-                        best_outcome = Outcome {
+                    let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_points(v));
+                    let points = credits - debits;
+                    if points > best_score.points {
+                        best_score = Score {
                             digs: vec![i.to_vec(), j.to_vec()],
                             bag: working_set.iter().copied().collect(),
-                            score: score,
-                            complete: false,
+                            points: points,
+                            winner: false,
                         };
                     }
                 }
             }
         } else {
             // tally total
-            let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
-            let score = credits - debits;
-            if score > best_outcome.score {
-                best_outcome = Outcome {
+            let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_points(v));
+            let points = credits - debits;
+            if points > best_score.points {
+                best_score = Score {
                     digs: vec![i.to_vec()],
                     bag: working_set.iter().copied().collect(),
-                    score: score,
-                    complete: false,
+                    points: points,
+                    winner: false,
                 };
             }
         }
@@ -96,7 +97,7 @@ pub fn score_hand(hand: &[u8; 10]) -> Outcome {
         working_set.remove(&i[1]);
         working_set.remove(&i[2]);
 
-        let credits = i.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
+        let credits = i.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
 
         let seven_c_threes = choose_threes(working_set.iter().copied().collect());
         if !seven_c_threes.is_empty() {
@@ -106,7 +107,7 @@ pub fn score_hand(hand: &[u8; 10]) -> Outcome {
                 working_set.remove(&j[1]);
                 working_set.remove(&j[2]);
 
-                let credits = credits + j.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
+                let credits = credits + j.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
 
                 let four_c_threes = choose_threes(working_set.iter().copied().collect());
                 if !four_c_threes.is_empty() {
@@ -117,50 +118,51 @@ pub fn score_hand(hand: &[u8; 10]) -> Outcome {
                         working_set.remove(&k[2]);
 
                         let credits =
-                            credits + k.to_vec().iter().fold(0, |acc, &v| acc + card_score(v));
+                            credits + k.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
 
                         // tally total
-                        let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
-                        let score = credits - debits;
-                        if score > best_outcome.score {
-                            best_outcome = Outcome {
+                        let debits: i32 =
+                            working_set.iter().fold(0, |acc, &v| acc + card_points(v));
+                        let points = credits - debits;
+                        if points > best_score.points {
+                            best_score = Score {
                                 digs: vec![i.to_vec(), j.to_vec(), k.to_vec()],
                                 bag: working_set.iter().copied().collect(),
-                                score: score,
-                                complete: false,
+                                points: points,
+                                winner: false,
                             };
                         }
                     }
                 } else {
                     // tally total
-                    let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
-                    let score = credits - debits;
-                    if score > best_outcome.score {
-                        best_outcome = Outcome {
+                    let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_points(v));
+                    let points = credits - debits;
+                    if points > best_score.points {
+                        best_score = Score {
                             digs: vec![i.to_vec(), j.to_vec()],
                             bag: working_set.iter().copied().collect(),
-                            score: score,
-                            complete: false,
+                            points: points,
+                            winner: false,
                         };
                     }
                 }
             }
         } else {
             // tally total
-            let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_score(v));
-            let score = credits - debits;
-            if score > best_outcome.score {
-                best_outcome = Outcome {
+            let debits: i32 = working_set.iter().fold(0, |acc, &v| acc + card_points(v));
+            let points = credits - debits;
+            if points > best_score.points {
+                best_score = Score {
                     digs: vec![i.to_vec()],
                     bag: working_set.iter().copied().collect(),
-                    score: score,
-                    complete: false,
+                    points: points,
+                    winner: false,
                 };
             }
         }
     }
 
-    best_outcome
+    best_score
 }
 
 fn choose_threes(set: Vec<u8>) -> HashSet<[u8; 3]> {
@@ -278,7 +280,7 @@ fn is_seq_four(a: u8, b: u8, c: u8, d: u8) -> bool {
     true
 }
 
-pub fn card_score(card: u8) -> i32 {
+pub fn card_points(card: u8) -> i32 {
     let value_index = card % 13;
 
     match value_index {

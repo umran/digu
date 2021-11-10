@@ -1,5 +1,5 @@
 use super::card::Card;
-use super::digu::score_hand;
+use super::digu::eval_hand;
 use super::stack::{Stack, DECK};
 use dialoguer::{theme::ColorfulTheme, Select, Sort};
 use std::collections::HashMap;
@@ -127,15 +127,15 @@ impl Game {
             }
 
             // check win condition
-            let outcome = score_hand(hand);
-            if outcome.complete {
+            let score = eval_hand(hand);
+            if score.winner {
                 println!("\n  player {} has won the game\n", active_player);
 
                 for p in 0..self.n_players {
                     let hand = self.hands.get(&p).unwrap();
-                    let outcome = score_hand(hand);
+                    let score = eval_hand(hand);
 
-                    println!("      player {} score: {}", p, outcome.score);
+                    println!("      player {} score: {}", p, score.points);
                 }
 
                 break;
