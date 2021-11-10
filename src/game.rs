@@ -109,6 +109,12 @@ impl Game {
             Action::InitiateDraw => {
                 self.draw_in_progress = true;
             }
+            Action::FinalizeDraw(discarded_index) => {
+                self.pile.stack(hand[discarded_index]);
+                hand[discarded_index] = self.deck.deal();
+
+                self.draw_in_progress = false;
+            }
             Action::Swap(discarded_index) => {
                 if self.pile.is_empty() {
                     return Err(String::from("Pile is empty, Please choose another action"));
@@ -117,12 +123,6 @@ impl Game {
                 let discarded_card = hand[discarded_index];
                 hand[discarded_index] = self.pile.deal();
                 self.pile.stack(discarded_card);
-            }
-            Action::FinalizeDraw(discarded_index) => {
-                self.pile.stack(hand[discarded_index]);
-                hand[discarded_index] = self.deck.deal();
-
-                self.draw_in_progress = false;
             }
         }
 
