@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 fn main() {
     // prompt user to select number of players
-    let possible_player_counts: &[u8] = &[1, 2, 3, 4];
+    let possible_player_counts: &[u8] = &[2, 3, 4];
 
     let player_count_index = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Please choose the number of players")
