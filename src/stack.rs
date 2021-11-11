@@ -1,6 +1,7 @@
 use rand::prelude::*;
 use rand::rngs::EntropyRng;
 use rand::seq::sample_indices;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 pub const DECK: [u8; 52] = [
@@ -9,6 +10,7 @@ pub const DECK: [u8; 52] = [
     50, 51,
 ];
 
+#[derive(Serialize, Deserialize)]
 pub struct Stack {
     cards: Vec<u8>,
 }

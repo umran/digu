@@ -1,14 +1,21 @@
-use super::card::Card;
 use super::digu::{eval_hand, Score};
 use super::stack::{Stack, DECK};
-use dialoguer::{theme::ColorfulTheme, Select, Sort};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub enum Action {
+    InitiateDraw,
+    FinalizeDraw(usize),
+    Swap(usize),
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct Outcome {
     pub winner: u8,
     pub scores: Vec<Score>,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct PublicState {
     pub active_player: u8,
     pub n_players: u8,
@@ -18,18 +25,13 @@ pub struct PublicState {
     pub outcome: Option<Outcome>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct PrivateState {
     pub hand: [u8; 10],
     pub deck_top: Option<u8>,
 }
 
-pub enum Action {
-    InitiateDraw,
-    FinalizeDraw(usize),
-    Swap(usize),
-}
-
+#[derive(Serialize, Deserialize)]
 pub struct Game {
     completed: bool,
     draw_in_progress: bool,

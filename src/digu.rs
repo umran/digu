@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
+#[derive(Serialize, Deserialize)]
 pub struct Score {
     pub digs: Vec<Vec<u8>>,
     pub bag: Vec<u8>,
