@@ -14,10 +14,8 @@ fn main() {
         .interact()
         .unwrap();
 
-    let (mut game, mut public_state, private_states) =
+    let (mut game, mut public_state, mut private_states) =
         Game::new(possible_player_counts[player_count_index]).unwrap();
-    let active_player_index: usize = public_state.active_player.into();
-    let mut private_state = private_states[active_player_index].clone();
 
     let mut hand_orderings: HashMap<u8, Vec<usize>> = HashMap::new();
     for p in 0..public_state.n_players {
@@ -26,6 +24,9 @@ fn main() {
 
     loop {
         println!("\n  player {}, your move\n", public_state.active_player);
+
+        let active_player_index: usize = public_state.active_player.into();
+        let private_state = private_states[active_player_index].clone();
 
         loop {
             let mut options = vec![
@@ -74,7 +75,8 @@ fn main() {
             }
 
             if option == 1 {
-                let (_, next_private_state) = game.step(Action::InitiateDraw).unwrap();
+                let (_, next_private_states) = game.step(Action::InitiateDraw).unwrap();
+                let next_private_state = next_private_states[active_player_index].clone();
 
                 let incoming_card_name = Card::new_from_index(next_private_state.deck_top.unwrap())
                     .unwrap()
@@ -92,11 +94,11 @@ fn main() {
 
                 let orderings = hand_orderings.get(&public_state.active_player).unwrap();
                 let discarded_index = orderings[discarded_index];
-                let (next_public_state, next_private_state) =
+                let (next_public_state, next_private_states) =
                     game.step(Action::FinalizeDraw(discarded_index)).unwrap();
 
                 public_state = next_public_state;
-                private_state = next_private_state;
+                private_states = next_private_states;
             }
 
             if option == 2 {
@@ -116,11 +118,11 @@ fn main() {
 
                 let orderings = hand_orderings.get(&public_state.active_player).unwrap();
                 let discarded_index = orderings[discarded_index];
-                let (next_public_state, next_private_state) =
+                let (next_public_state, next_private_states) =
                     game.step(Action::Swap(discarded_index)).unwrap();
 
                 public_state = next_public_state;
-                private_state = next_private_state;
+                private_states = next_private_states;
             }
 
             break;

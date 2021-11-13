@@ -92,7 +92,7 @@ impl Game {
         Ok((gme, public_state, private_states))
     }
 
-    pub fn step(&mut self, action: Action) -> Result<(PublicState, PrivateState), String> {
+    pub fn step(&mut self, action: Action) -> Result<(PublicState, Vec<PrivateState>), String> {
         if self.completed {
             return Err(String::from("Game is already over"));
         }
@@ -173,14 +173,17 @@ impl Game {
             },
         };
 
-        let private_state = PrivateState {
-            hand: *self.hands.get(&self.active_player).unwrap(),
-            deck_top: match self.draw_in_progress {
-                true => Some(self.deck.top()),
-                false => None,
-            },
-        };
+        let mut private_states: Vec<PrivateState> = vec![];
+        for i in 0..self.n_players {
+            private_states.push(PrivateState {
+                hand: *self.hands.get(&i).unwrap(),
+                deck_top: match self.draw_in_progress && i == active_player {
+                    true => Some(self.deck.top()),
+                    false => None,
+                },
+            });
+        }
 
-        Ok((public_state, private_state))
+        Ok((public_state, private_states))
     }
 }
