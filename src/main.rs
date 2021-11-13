@@ -82,23 +82,42 @@ fn main() {
                     .unwrap()
                     .name();
 
-                let discarded_index = Select::with_theme(&ColorfulTheme::default())
+                let should_swap = Select::with_theme(&ColorfulTheme::default())
                     .with_prompt(
-                        format!("Choose card to discard in place of {}", incoming_card_name)
+                        format!("You drew {}. Would you like to swap?", &incoming_card_name)
                             .as_str(),
                     )
                     .default(0)
-                    .items(&hand_labels[..])
+                    .items(&vec!["Yes".to_string(), "No".to_string()][..])
                     .interact()
                     .unwrap();
 
-                let orderings = hand_orderings.get(&public_state.active_player).unwrap();
-                let discarded_index = orderings[discarded_index];
-                let (next_public_state, next_private_states) =
-                    game.step(Action::FinalizeDraw(discarded_index)).unwrap();
+                if should_swap == 0 {
+                    let discarded_index = Select::with_theme(&ColorfulTheme::default())
+                        .with_prompt(
+                            format!("Choose card to discard in place of {}", incoming_card_name)
+                                .as_str(),
+                        )
+                        .default(0)
+                        .items(&hand_labels[..])
+                        .interact()
+                        .unwrap();
 
-                public_state = next_public_state;
-                private_states = next_private_states;
+                    let orderings = hand_orderings.get(&public_state.active_player).unwrap();
+                    let discarded_index = orderings[discarded_index];
+                    let (next_public_state, next_private_states) = game
+                        .step(Action::FinalizeDraw(Some(discarded_index)))
+                        .unwrap();
+
+                    public_state = next_public_state;
+                    private_states = next_private_states;
+                } else {
+                    let (next_public_state, next_private_states) =
+                        game.step(Action::FinalizeDraw(None)).unwrap();
+
+                    public_state = next_public_state;
+                    private_states = next_private_states;
+                }
             }
 
             if option == 2 {

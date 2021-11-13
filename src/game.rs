@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 pub enum Action {
     InitiateDraw,
-    FinalizeDraw(usize),
+    FinalizeDraw(Option<usize>),
     Swap(usize),
 }
 
@@ -111,9 +111,13 @@ impl Game {
             Action::InitiateDraw => {
                 self.draw_in_progress = true;
             }
-            Action::FinalizeDraw(discarded_index) => {
-                self.pile.stack(hand[discarded_index]);
-                hand[discarded_index] = self.deck.deal();
+            Action::FinalizeDraw(possible_discarded_index) => {
+                if let Some(discarded_index) = possible_discarded_index {
+                    self.pile.stack(hand[discarded_index]);
+                    hand[discarded_index] = self.deck.deal();
+                } else {
+                    self.pile.stack(self.deck.deal());
+                }
 
                 self.draw_in_progress = false;
             }
