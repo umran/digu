@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -19,37 +20,35 @@ pub fn eval_hand(hand: &[u8; 10]) -> Score {
         winner: false,
     };
 
-    let ten_c_fours = choose_fours(working_set.iter().copied().collect());
+    let ten_c_fours = find_digs(working_set.iter().copied().collect(), 4);
     for (_, i) in ten_c_fours.iter().enumerate() {
         let mut working_set: HashSet<u8> = working_set.iter().copied().collect();
-        working_set.remove(&i[0]);
-        working_set.remove(&i[1]);
-        working_set.remove(&i[2]);
-        working_set.remove(&i[3]);
+        for (_, card) in i.iter().enumerate() {
+            working_set.remove(card);
+        }
 
-        let credits = i.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
+        let credits = i.iter().fold(0, |acc, &v| acc + card_points(v));
 
-        let six_c_threes = choose_threes(working_set.iter().copied().collect());
+        let six_c_threes = find_digs(working_set.iter().copied().collect(), 3);
         if !six_c_threes.is_empty() {
             for (_, j) in six_c_threes.iter().enumerate() {
                 let mut working_set: HashSet<u8> = working_set.iter().copied().collect();
-                working_set.remove(&j[0]);
-                working_set.remove(&j[1]);
-                working_set.remove(&j[2]);
+                for (_, card) in j.iter().enumerate() {
+                    working_set.remove(card);
+                }
 
-                let credits = credits + j.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
+                let credits = credits + j.iter().fold(0, |acc, &v| acc + card_points(v));
 
                 // tally the final 3 cards
-                let three_c_threes = choose_threes(working_set.iter().copied().collect());
+                let three_c_threes = find_digs(working_set.iter().copied().collect(), 3);
                 if !three_c_threes.is_empty() {
                     for (_, k) in three_c_threes.iter().enumerate() {
                         let mut working_set: HashSet<u8> = working_set.iter().copied().collect();
-                        working_set.remove(&k[0]);
-                        working_set.remove(&k[1]);
-                        working_set.remove(&k[2]);
+                        for (_, card) in k.iter().enumerate() {
+                            working_set.remove(card);
+                        }
 
-                        let credits =
-                            credits + k.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
+                        let credits = credits + k.iter().fold(0, |acc, &v| acc + card_points(v));
                         // tally total
                         let debits: i32 =
                             working_set.iter().fold(0, |acc, &v| acc + card_points(v));
@@ -92,35 +91,34 @@ pub fn eval_hand(hand: &[u8; 10]) -> Score {
         }
     }
 
-    let ten_c_threes = choose_threes(working_set.iter().copied().collect());
+    let ten_c_threes = find_digs(working_set.iter().copied().collect(), 3);
     for (_, i) in ten_c_threes.iter().enumerate() {
         let mut working_set: HashSet<u8> = working_set.iter().copied().collect();
-        working_set.remove(&i[0]);
-        working_set.remove(&i[1]);
-        working_set.remove(&i[2]);
+        for (_, card) in i.iter().enumerate() {
+            working_set.remove(card);
+        }
 
-        let credits = i.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
+        let credits = i.iter().fold(0, |acc, &v| acc + card_points(v));
 
-        let seven_c_threes = choose_threes(working_set.iter().copied().collect());
+        let seven_c_threes = find_digs(working_set.iter().copied().collect(), 3);
         if !seven_c_threes.is_empty() {
             for (_, j) in seven_c_threes.iter().enumerate() {
                 let mut working_set: HashSet<u8> = working_set.iter().copied().collect();
-                working_set.remove(&j[0]);
-                working_set.remove(&j[1]);
-                working_set.remove(&j[2]);
+                for (_, card) in j.iter().enumerate() {
+                    working_set.remove(card);
+                }
 
-                let credits = credits + j.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
+                let credits = credits + j.iter().fold(0, |acc, &v| acc + card_points(v));
 
-                let four_c_threes = choose_threes(working_set.iter().copied().collect());
+                let four_c_threes = find_digs(working_set.iter().copied().collect(), 3);
                 if !four_c_threes.is_empty() {
                     for (_, k) in four_c_threes.iter().enumerate() {
                         let mut working_set: HashSet<u8> = working_set.iter().copied().collect();
-                        working_set.remove(&k[0]);
-                        working_set.remove(&k[1]);
-                        working_set.remove(&k[2]);
+                        for (_, card) in k.iter().enumerate() {
+                            working_set.remove(card);
+                        }
 
-                        let credits =
-                            credits + k.to_vec().iter().fold(0, |acc, &v| acc + card_points(v));
+                        let credits = credits + k.iter().fold(0, |acc, &v| acc + card_points(v));
 
                         // tally total
                         let debits: i32 =
@@ -167,115 +165,51 @@ pub fn eval_hand(hand: &[u8; 10]) -> Score {
     best_score
 }
 
-fn choose_threes(set: Vec<u8>) -> HashSet<[u8; 3]> {
-    let mut chosen = HashSet::new();
-
-    for (i, ci) in set.iter().enumerate() {
-        for (j, cj) in set.iter().enumerate() {
-            for (k, ck) in set.iter().enumerate() {
-                if i == j || i == k || j == k {
-                    continue;
-                }
-
-                if is_three_dig(*ci, *cj, *ck) {
-                    chosen.insert([*ci, *cj, *ck]);
-                }
-            }
+fn find_digs(set: Vec<u8>, dig_length: usize) -> Vec<Vec<u8>> {
+    let mut digs = vec![];
+    let combos = set.into_iter().combinations(dig_length);
+    for (_, combo) in combos.enumerate() {
+        if is_dig(combo.clone()) {
+            digs.push(combo);
         }
     }
 
-    chosen
+    digs
 }
 
-fn choose_fours(set: Vec<u8>) -> HashSet<[u8; 4]> {
-    let mut chosen = HashSet::new();
+fn is_dig(combo: Vec<u8>) -> bool {
+    is_par(combo.clone()) || is_seq(combo.clone())
+}
 
-    for (i, ci) in set.iter().enumerate() {
-        for (j, cj) in set.iter().enumerate() {
-            for (k, ck) in set.iter().enumerate() {
-                for (l, cl) in set.iter().enumerate() {
-                    if i == j || i == k || i == l || j == k || j == l || k == l {
-                        continue;
-                    }
-
-                    if is_four_dig(*ci, *cj, *ck, *cl) {
-                        chosen.insert([*ci, *cj, *ck, *cl]);
-                    }
-                }
+fn is_par(combo: Vec<u8>) -> bool {
+    for (i, val) in combo.iter().enumerate() {
+        if i > 0 {
+            let a = val % 13;
+            let b = combo[i - 1] % 13;
+            if a != b {
+                return false;
             }
         }
-    }
-
-    chosen
-}
-
-fn is_three_dig(a: u8, b: u8, c: u8) -> bool {
-    is_par_three(a, b, c) || is_seq_three(a, b, c)
-}
-
-fn is_four_dig(a: u8, b: u8, c: u8, d: u8) -> bool {
-    is_par_four(a, b, c, d) || is_seq_four(a, b, c, d)
-}
-
-fn is_par_three(a: u8, b: u8, c: u8) -> bool {
-    let a = a % 13;
-    let b = b % 13;
-    let c = c % 13;
-
-    a == b && a == c
-}
-
-fn is_par_four(a: u8, b: u8, c: u8, d: u8) -> bool {
-    let a = a % 13;
-    let b = b % 13;
-    let c = c % 13;
-    let d = d % 13;
-
-    a == b && a == c && a == d
-}
-
-fn is_seq_three(a: u8, b: u8, c: u8) -> bool {
-    let mut sorted = vec![a, b, c];
-    sorted.sort();
-
-    let a = sorted[0] % 13;
-    let b = sorted[1] % 13;
-    let c = sorted[2] % 13;
-
-    if a > b || (b - a) != 1 {
-        return false;
-    }
-    if b > c || (c - b) != 1 {
-        return false;
-    }
-
-    if c > 11 {
-        return false;
     }
 
     true
 }
 
-fn is_seq_four(a: u8, b: u8, c: u8, d: u8) -> bool {
-    let mut sorted = vec![a, b, c, d];
-    sorted.sort();
+fn is_seq(mut combo: Vec<u8>) -> bool {
+    combo.sort();
 
-    let a = sorted[0] % 13;
-    let b = sorted[1] % 13;
-    let c = sorted[2] % 13;
-    let d = sorted[3] % 13;
+    for (i, val) in combo.iter().enumerate() {
+        if i > 0 {
+            let b = val % 13;
+            let a = combo[i - 1] % 13;
 
-    if a > b || (b - a) != 1 {
-        return false;
-    }
-    if b > c || (c - b) != 1 {
-        return false;
-    }
-    if c > d || (d - c) != 1 {
-        return false;
+            if a > b || b - a != 1 {
+                return false;
+            }
+        }
     }
 
-    if d > 11 {
+    if combo[combo.len() - 1] > 11 {
         return false;
     }
 
