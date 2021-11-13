@@ -15,7 +15,7 @@ fn main() {
         .unwrap();
 
     let (mut game, mut public_state, private_states) =
-        Game::new(possible_player_counts[player_count_index]);
+        Game::new(possible_player_counts[player_count_index]).unwrap();
     let active_player_index: usize = public_state.active_player.into();
     let mut private_state = private_states[active_player_index].clone();
 

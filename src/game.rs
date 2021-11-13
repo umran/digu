@@ -43,9 +43,9 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(n_players: u8) -> (Self, PublicState, Vec<PrivateState>) {
+    pub fn new(n_players: u8) -> Result<(Self, PublicState, Vec<PrivateState>), String> {
         if n_players == 1 || n_players > 4 {
-            panic!("Invalid number of players");
+            return Err(String::from("Invalid number of players"));
         }
 
         let mut deck = Stack::new(DECK.to_vec());
@@ -89,7 +89,7 @@ impl Game {
             });
         }
 
-        (gme, public_state, private_states)
+        Ok((gme, public_state, private_states))
     }
 
     pub fn step(&mut self, action: Action) -> Result<(PublicState, PrivateState), String> {
