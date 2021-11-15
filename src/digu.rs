@@ -198,19 +198,24 @@ fn is_par(combo: Vec<u8>) -> bool {
 fn is_seq(mut combo: Vec<u8>) -> bool {
     combo.sort();
 
-    for (i, val) in combo.iter().enumerate() {
-        if i > 0 {
-            let b = val % 13;
-            let a = combo[i - 1] % 13;
+    if combo[0] % 13 > 11 || combo[combo.len() - 1] % 13 > 11 {
+        return false;
+    }
 
-            if a > b || b - a != 1 {
+    for (i, b) in combo.iter().enumerate() {
+        if i > 0 {
+            let a = combo[i - 1];
+            let val_b = b % 13;
+            let val_a = a % 13;
+
+            if b - a != 1 {
+                return false;
+            }
+
+            if val_a > val_b || val_b - val_a != 1 {
                 return false;
             }
         }
-    }
-
-    if combo[combo.len() - 1] > 11 {
-        return false;
     }
 
     true
