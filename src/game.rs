@@ -161,7 +161,7 @@ impl Game {
 
         // check win condition
         let score = eval_hand(hand);
-        if score.winner {
+        if score.winner || self.forfeitures.len() == (self.n_players - 1).into() {
             self.completed = true;
         }
 
@@ -170,7 +170,7 @@ impl Game {
             n_players: self.n_players,
             forfeitures: self.forfeitures.clone(),
             pile: self.pile.clone(),
-            outcome: match score.winner {
+            outcome: match self.completed {
                 true => {
                     let mut outcome = Outcome {
                         winner: active_player,
