@@ -1,12 +1,13 @@
 use super::digu::{eval_hand, Score};
 use super::stack::{Stack, DECK};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub enum Action {
     InitiateDraw,
     FinalizeDraw(Option<usize>),
     Swap(usize),
+    Forfeit,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -19,9 +20,8 @@ pub struct Outcome {
 pub struct PublicState {
     pub active_player: u8,
     pub n_players: u8,
-    pub n_deck: usize,
-    pub n_pile: usize,
-    pub pile_top: Option<u8>,
+    pub forfeitures: HashSet<u8>,
+    pub pile: Stack,
     pub outcome: Option<Outcome>,
 }
 
@@ -37,6 +37,7 @@ pub struct Game {
     draw_in_progress: bool,
     active_player: u8,
     n_players: u8,
+    forfeitures: HashSet<u8>,
     deck: Stack,
     pile: Stack,
     hands: HashMap<u8, [u8; 10]>,
@@ -51,33 +52,34 @@ impl Game {
         let mut deck = Stack::new(DECK.to_vec());
         deck.shuffle();
 
-        let pile = Stack::new(vec![]);
-
         let mut hands: HashMap<u8, [u8; 10]> = HashMap::new();
         for i in 0..n_players {
             let mut hand: [u8; 10] = [0; 10];
             for i in 0..10 {
-                hand[i] = deck.deal();
+                hand[i] = deck.deal().unwrap();
             }
             hands.insert(i, hand);
         }
+
+        let forfeitures: HashSet<u8> = HashSet::new();
+        let pile = Stack::new(vec![]);
 
         let gme = Self {
             completed: false,
             draw_in_progress: false,
             active_player: 0,
             n_players,
+            forfeitures: forfeitures.clone(),
             deck,
-            pile,
+            pile: pile.clone(),
             hands,
         };
 
         let public_state = PublicState {
             active_player: gme.active_player,
             n_players: gme.n_players,
-            n_deck: gme.deck.len(),
-            n_pile: gme.pile.len(),
-            pile_top: None,
+            forfeitures: forfeitures,
+            pile: pile,
             outcome: None,
         };
 
@@ -97,10 +99,9 @@ impl Game {
             return Err(String::from("Game is already over"));
         }
 
+        // the only allowed actions while draw is in progress are FinalizeDraw and Forfeit
         if self.draw_in_progress {
-            if let Action::FinalizeDraw(_) = action {
-                // noop
-            } else {
+            if !(matches!(action, Action::FinalizeDraw(_)) || matches!(action, Action::Forfeit)) {
                 return Err(String::from("Invalid action. Expected FinalizeDraw"));
             }
         }
@@ -114,9 +115,9 @@ impl Game {
             Action::FinalizeDraw(possible_discarded_index) => {
                 if let Some(discarded_index) = possible_discarded_index {
                     self.pile.stack(hand[discarded_index]);
-                    hand[discarded_index] = self.deck.deal();
+                    hand[discarded_index] = self.deck.deal().unwrap();
                 } else {
-                    self.pile.stack(self.deck.deal());
+                    self.pile.stack(self.deck.deal().unwrap());
                 }
 
                 self.draw_in_progress = false;
@@ -127,14 +128,29 @@ impl Game {
                 }
 
                 let discarded_card = hand[discarded_index];
-                hand[discarded_index] = self.pile.deal();
+                hand[discarded_index] = self.pile.deal().unwrap();
                 self.pile.stack(discarded_card);
+            }
+            Action::Forfeit => {
+                for (_, &c) in hand.iter().enumerate() {
+                    self.deck.stack(c);
+                }
+                self.deck.shuffle();
+                self.forfeitures.insert(active_player);
+                self.draw_in_progress = false;
             }
         }
 
         if !self.draw_in_progress {
-            // switch player
-            self.active_player = (active_player + 1) % self.n_players; // switch player
+            loop {
+                self.active_player = (self.active_player + 1) % self.n_players;
+                if !self.forfeitures.contains(&self.active_player) {
+                    break;
+                }
+                if self.active_player == active_player {
+                    break;
+                }
+            }
         }
 
         // if the deck has run out, transfer pile to deck and shuffle
@@ -152,12 +168,8 @@ impl Game {
         let public_state = PublicState {
             active_player: self.active_player,
             n_players: self.n_players,
-            n_deck: self.deck.len(),
-            n_pile: self.pile.len(),
-            pile_top: match self.pile.is_empty() {
-                true => None,
-                false => Some(self.pile.top()),
-            },
+            forfeitures: self.forfeitures.clone(),
+            pile: self.pile.clone(),
             outcome: match score.winner {
                 true => {
                     let mut outcome = Outcome {
@@ -182,7 +194,7 @@ impl Game {
             private_states.push(PrivateState {
                 hand: *self.hands.get(&i).unwrap(),
                 deck_top: match self.draw_in_progress && i == active_player {
-                    true => Some(self.deck.top()),
+                    true => Some(self.deck.top().unwrap()),
                     false => None,
                 },
             });

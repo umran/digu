@@ -10,7 +10,7 @@ pub const DECK: [u8; 52] = [
     50, 51,
 ];
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Stack {
     cards: Vec<u8>,
 }
@@ -42,12 +42,15 @@ impl Stack {
         self.cards.len() == 0
     }
 
-    pub fn top(&self) -> u8 {
-        self.cards[self.cards.len() - 1]
+    pub fn top(&self) -> Option<u8> {
+        match self.cards.len() > 0 {
+            true => Some(self.cards[self.cards.len() - 1]),
+            false => None,
+        }
     }
 
-    pub fn deal(&mut self) -> u8 {
-        self.cards.pop().unwrap()
+    pub fn deal(&mut self) -> Option<u8> {
+        self.cards.pop()
     }
 
     pub fn stack(&mut self, card: u8) {

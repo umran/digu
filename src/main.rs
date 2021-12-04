@@ -34,7 +34,7 @@ fn main() {
                 "Pick card from deck".to_string(),
             ];
 
-            if let Some(pile_top) = public_state.pile_top {
+            if let Some(pile_top) = public_state.pile.top() {
                 options.push(format!(
                     "Pick {} from pile",
                     Card::new_from_index(pile_top).unwrap().name()
@@ -121,7 +121,7 @@ fn main() {
             }
 
             if option == 2 {
-                let incoming_card_name = Card::new_from_index(public_state.pile_top.unwrap())
+                let incoming_card_name = Card::new_from_index(public_state.pile.top().unwrap())
                     .unwrap()
                     .name();
 
