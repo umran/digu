@@ -104,7 +104,9 @@ impl Game {
         // the only allowed actions while draw is in progress are FinalizeDraw and Forfeit
         if self.draw_in_progress {
             if !(matches!(action, Action::FinalizeDraw(_)) || matches!(action, Action::Forfeit)) {
-                return Err(String::from("Invalid action. Expected FinalizeDraw"));
+                return Err(String::from(
+                    "Invalid action. Expected FinalizeDraw or Forfeit",
+                ));
             }
         }
 

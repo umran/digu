@@ -8,6 +8,7 @@ use dropshot::HttpResponseOk;
 use dropshot::HttpServerStarter;
 use dropshot::RequestContext;
 use dropshot::TypedBody;
+use http::StatusCode;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -41,12 +42,20 @@ async fn init_game(
     body_params: TypedBody<InitRequest>,
 ) -> Result<HttpResponseOk<Response>, HttpError> {
     let params = body_params.into_inner();
-    let (game, public_state, private_states) = Game::new(params.n_players).unwrap();
-    Ok(HttpResponseOk(Response {
-        game,
-        public_state,
-        private_states,
-    }))
+    let result = Game::new(params.n_players);
+    match result {
+        Err(err) => Err(HttpError {
+            status_code: StatusCode::BAD_REQUEST,
+            error_code: None,
+            external_message: err.clone(),
+            internal_message: err,
+        }),
+        Ok((game, public_state, private_states)) => Ok(HttpResponseOk(Response {
+            game,
+            public_state,
+            private_states,
+        })),
+    }
 }
 
 #[endpoint {
@@ -58,12 +67,20 @@ async fn step_game(
     body_params: TypedBody<StepRequest>,
 ) -> Result<HttpResponseOk<Response>, HttpError> {
     let mut params = body_params.into_inner();
-    let (public_state, private_states) = params.game.step(params.action).unwrap();
-    Ok(HttpResponseOk(Response {
-        game: params.game,
-        public_state,
-        private_states,
-    }))
+    let result = params.game.step(params.action);
+    match result {
+        Err(err) => Err(HttpError {
+            status_code: StatusCode::BAD_REQUEST,
+            error_code: None,
+            external_message: err.clone(),
+            internal_message: err,
+        }),
+        Ok((public_state, private_states)) => Ok(HttpResponseOk(Response {
+            game: params.game,
+            public_state,
+            private_states,
+        })),
+    }
 }
 
 pub async fn start() -> Result<(), String> {
