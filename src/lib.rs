@@ -1,6 +1,7 @@
 pub mod card;
 mod digu;
 pub mod game;
+pub mod server;
 mod stack;
 
 #[cfg(test)]

@@ -1,8 +1,10 @@
 use super::digu::{eval_hand, Score};
 use super::stack::{Stack, DECK};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
+#[derive(Serialize, Deserialize, JsonSchema)]
 pub enum Action {
     InitiateDraw,
     FinalizeDraw(Option<usize>),
@@ -10,13 +12,13 @@ pub enum Action {
     Forfeit,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Outcome {
     pub winner: u8,
     pub scores: Vec<Score>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 pub struct PublicState {
     pub active_player: u8,
     pub n_players: u8,
@@ -25,13 +27,13 @@ pub struct PublicState {
     pub outcome: Option<Outcome>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PrivateState {
     pub hand: [u8; 10],
     pub deck_top: Option<u8>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Game {
     completed: bool,
     draw_in_progress: bool,
@@ -161,7 +163,7 @@ impl Game {
 
         // check win condition
         let score = eval_hand(hand);
-        if score.winner || self.forfeitures.len() == (self.n_players - 1).into() {
+        if score.winner || self.forfeitures.len() == usize::from(self.n_players - 1) {
             self.completed = true;
         }
 

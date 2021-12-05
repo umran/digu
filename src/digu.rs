@@ -1,8 +1,9 @@
 use itertools::Itertools;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Score {
     pub digs: Vec<Vec<u8>>,
     pub bag: Vec<u8>,
