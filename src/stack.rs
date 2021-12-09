@@ -35,19 +35,16 @@ impl Stack {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.cards.len()
-    }
-
     pub fn is_empty(&self) -> bool {
         self.cards.len() == 0
     }
 
     pub fn top(&self) -> Option<u8> {
-        match self.cards.len() > 0 {
-            true => Some(self.cards[self.cards.len() - 1]),
-            false => None,
-        }
+        self.cards.last().map(|&c| c)
+    }
+
+    pub fn list(&self) -> Vec<u8> {
+        self.cards.clone()
     }
 
     pub fn deal(&mut self) -> Option<u8> {

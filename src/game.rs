@@ -12,7 +12,7 @@ pub enum Action {
     Forfeit,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Outcome {
     pub winner: u8,
     pub scores: Vec<Score>,
@@ -20,11 +20,13 @@ pub struct Outcome {
 
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct PublicState {
+    pub completed: bool,
     pub steps: u32,
+    pub draw_in_progress: bool,
     pub active_player: u8,
     pub n_players: u8,
     pub forfeitures: HashSet<u8>,
-    pub pile: Stack,
+    pub pile: Vec<u8>,
     pub outcome: Option<Outcome>,
 }
 
@@ -45,6 +47,7 @@ pub struct Game {
     deck: Stack,
     pile: Stack,
     hands: HashMap<u8, [u8; 10]>,
+    outcome: Option<Outcome>,
 }
 
 impl Game {
@@ -78,14 +81,17 @@ impl Game {
             deck,
             pile: pile.clone(),
             hands,
+            outcome: None,
         };
 
         let public_state = PublicState {
+            completed: gme.completed,
             steps: 0,
+            draw_in_progress: gme.draw_in_progress,
             active_player: gme.active_player,
             n_players: gme.n_players,
             forfeitures: forfeitures,
-            pile: pile,
+            pile: pile.list(),
             outcome: None,
         };
 
@@ -122,8 +128,17 @@ impl Game {
             }
             Action::FinalizeDraw(possible_discarded_index) => {
                 if let Some(discarded_index) = possible_discarded_index {
-                    self.pile.stack(hand[discarded_index]);
-                    hand[discarded_index] = self.deck.deal().unwrap();
+                    match discarded_index {
+                        0..=9 => {
+                            self.pile.stack(hand[discarded_index]);
+                            hand[discarded_index] = self.deck.deal().unwrap();
+                        }
+                        _ => {
+                            return Err(String::from(
+                                "Invalid index, please provide a value between 0 and 9",
+                            ));
+                        }
+                    }
                 } else {
                     self.pile.stack(self.deck.deal().unwrap());
                 }
@@ -135,9 +150,18 @@ impl Game {
                     return Err(String::from("Pile is empty, Please choose another action"));
                 }
 
-                let discarded_card = hand[discarded_index];
-                hand[discarded_index] = self.pile.deal().unwrap();
-                self.pile.stack(discarded_card);
+                match discarded_index {
+                    0..=9 => {
+                        let discarded_card = hand[discarded_index];
+                        hand[discarded_index] = self.pile.deal().unwrap();
+                        self.pile.stack(discarded_card);
+                    }
+                    _ => {
+                        return Err(String::from(
+                            "Invalid index, please provide a value between 0 and 9",
+                        ))
+                    }
+                }
             }
             Action::Forfeit => {
                 for (_, &c) in hand.iter().enumerate() {
@@ -172,32 +196,35 @@ impl Game {
         // check win condition
         let score = eval_hand(hand);
         if score.winner || self.forfeitures.len() == usize::from(self.n_players - 1) {
+            let mut outcome = Outcome {
+                winner: active_player,
+                scores: vec![],
+            };
+
+            for p in 0..self.n_players {
+                if p == active_player {
+                    outcome.scores.push(score.clone());
+                    continue;
+                }
+
+                let hand = self.hands.get(&p).unwrap();
+                let score = eval_hand(hand);
+                outcome.scores.push(score);
+            }
+
+            self.outcome = Some(outcome);
             self.completed = true;
         }
 
         let public_state = PublicState {
+            completed: self.completed,
             steps: self.steps,
+            draw_in_progress: self.draw_in_progress,
             active_player: self.active_player,
             n_players: self.n_players,
             forfeitures: self.forfeitures.clone(),
-            pile: self.pile.clone(),
-            outcome: match self.completed {
-                true => {
-                    let mut outcome = Outcome {
-                        winner: active_player,
-                        scores: vec![],
-                    };
-
-                    for p in 0..self.n_players {
-                        let hand = self.hands.get(&p).unwrap();
-                        let score = eval_hand(hand);
-                        outcome.scores.push(score);
-                    }
-
-                    Some(outcome)
-                }
-                false => None,
-            },
+            pile: self.pile.list(),
+            outcome: self.outcome.clone(),
         };
 
         let mut private_states: Vec<PrivateState> = vec![];
