@@ -1,0 +1,320 @@
+{
+    "components": {
+        "schemas": {
+            "Action": {
+                "oneOf": [
+                    { "enum": ["InitiateDraw", "Forfeit"], "type": "string" },
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "FinalizeDraw": {
+                                "format": "uint",
+                                "minimum": 0,
+                                "nullable": true,
+                                "type": "integer"
+                            }
+                        },
+                        "required": ["FinalizeDraw"],
+                        "type": "object"
+                    },
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "Swap": {
+                                "format": "uint",
+                                "minimum": 0,
+                                "type": "integer"
+                            }
+                        },
+                        "required": ["Swap"],
+                        "type": "object"
+                    }
+                ]
+            },
+            "Game": {
+                "properties": {
+                    "active_player": {
+                        "format": "uint8",
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "completed": { "type": "boolean" },
+                    "deck": { "$ref": "#/components/schemas/Stack" },
+                    "draw_in_progress": { "type": "boolean" },
+                    "forfeitures": {
+                        "items": {
+                            "format": "uint8",
+                            "minimum": 0,
+                            "type": "integer"
+                        },
+                        "type": "array",
+                        "uniqueItems": true
+                    },
+                    "hands": {
+                        "additionalProperties": {
+                            "items": {
+                                "format": "uint8",
+                                "minimum": 0,
+                                "type": "integer"
+                            },
+                            "maxItems": 10,
+                            "minItems": 10,
+                            "type": "array"
+                        },
+                        "type": "object"
+                    },
+                    "n_players": {
+                        "format": "uint8",
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "outcome": {
+                        "allOf": [{ "$ref": "#/components/schemas/Outcome" }],
+                        "nullable": true
+                    },
+                    "pile": { "$ref": "#/components/schemas/Stack" },
+                    "steps": {
+                        "format": "uint32",
+                        "minimum": 0,
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "active_player",
+                    "completed",
+                    "deck",
+                    "draw_in_progress",
+                    "forfeitures",
+                    "hands",
+                    "n_players",
+                    "pile",
+                    "steps"
+                ],
+                "type": "object"
+            },
+            "InitRequest": {
+                "properties": {
+                    "n_players": {
+                        "format": "uint8",
+                        "minimum": 0,
+                        "type": "integer"
+                    }
+                },
+                "required": ["n_players"],
+                "type": "object"
+            },
+            "Outcome": {
+                "properties": {
+                    "scores": {
+                        "items": { "$ref": "#/components/schemas/Score" },
+                        "type": "array"
+                    },
+                    "winner": {
+                        "format": "uint8",
+                        "minimum": 0,
+                        "type": "integer"
+                    }
+                },
+                "required": ["scores", "winner"],
+                "type": "object"
+            },
+            "PrivateState": {
+                "properties": {
+                    "deck_top": {
+                        "format": "uint8",
+                        "minimum": 0,
+                        "nullable": true,
+                        "type": "integer"
+                    },
+                    "hand": {
+                        "items": {
+                            "format": "uint8",
+                            "minimum": 0,
+                            "type": "integer"
+                        },
+                        "maxItems": 10,
+                        "minItems": 10,
+                        "type": "array"
+                    }
+                },
+                "required": ["hand"],
+                "type": "object"
+            },
+            "PublicState": {
+                "properties": {
+                    "active_player": {
+                        "format": "uint8",
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "completed": { "type": "boolean" },
+                    "draw_in_progress": { "type": "boolean" },
+                    "forfeitures": {
+                        "items": {
+                            "format": "uint8",
+                            "minimum": 0,
+                            "type": "integer"
+                        },
+                        "type": "array",
+                        "uniqueItems": true
+                    },
+                    "n_players": {
+                        "format": "uint8",
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "outcome": {
+                        "allOf": [{ "$ref": "#/components/schemas/Outcome" }],
+                        "nullable": true
+                    },
+                    "pile": {
+                        "items": {
+                            "format": "uint8",
+                            "minimum": 0,
+                            "type": "integer"
+                        },
+                        "type": "array"
+                    },
+                    "steps": {
+                        "format": "uint32",
+                        "minimum": 0,
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "active_player",
+                    "completed",
+                    "draw_in_progress",
+                    "forfeitures",
+                    "n_players",
+                    "pile",
+                    "steps"
+                ],
+                "type": "object"
+            },
+            "Response": {
+                "properties": {
+                    "game": { "$ref": "#/components/schemas/Game" },
+                    "private_states": {
+                        "items": {
+                            "$ref": "#/components/schemas/PrivateState"
+                        },
+                        "type": "array"
+                    },
+                    "public_state": {
+                        "$ref": "#/components/schemas/PublicState"
+                    }
+                },
+                "required": ["game", "private_states", "public_state"],
+                "type": "object"
+            },
+            "Score": {
+                "properties": {
+                    "bag": {
+                        "items": {
+                            "format": "uint8",
+                            "minimum": 0,
+                            "type": "integer"
+                        },
+                        "type": "array"
+                    },
+                    "digs": {
+                        "items": {
+                            "items": {
+                                "format": "uint8",
+                                "minimum": 0,
+                                "type": "integer"
+                            },
+                            "type": "array"
+                        },
+                        "type": "array"
+                    },
+                    "points": { "format": "int32", "type": "integer" },
+                    "winner": { "type": "boolean" }
+                },
+                "required": ["bag", "digs", "points", "winner"],
+                "type": "object"
+            },
+            "Stack": {
+                "properties": {
+                    "cards": {
+                        "items": {
+                            "format": "uint8",
+                            "minimum": 0,
+                            "type": "integer"
+                        },
+                        "type": "array"
+                    }
+                },
+                "required": ["cards"],
+                "type": "object"
+            },
+            "StepRequest": {
+                "properties": {
+                    "action": { "$ref": "#/components/schemas/Action" },
+                    "game": { "$ref": "#/components/schemas/Game" }
+                },
+                "required": ["action", "game"],
+                "type": "object"
+            }
+        }
+    },
+    "info": { "title": "digu_engine", "version": "1.0.0" },
+    "openapi": "3.0.3",
+    "paths": {
+        "/init": {
+            "post": {
+                "operationId": "init_game",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InitRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "successful operation"
+                    }
+                }
+            }
+        },
+        "/step": {
+            "post": {
+                "operationId": "step_game",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StepRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "successful operation"
+                    }
+                }
+            }
+        }
+    }
+}

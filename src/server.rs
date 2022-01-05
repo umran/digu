@@ -96,6 +96,14 @@ pub async fn start() -> Result<(), String> {
     api.register(init_game).unwrap();
     api.register(step_game).unwrap();
 
+    print!(
+        "{}\n",
+        api.openapi("digu_engine", "1.0.0")
+            .json()
+            .unwrap()
+            .to_string()
+    );
+
     // Start the server.
     let server = HttpServerStarter::new(
         &ConfigDropshot {
