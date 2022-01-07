@@ -21,7 +21,6 @@ pub struct Outcome {
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct PublicState {
     pub completed: bool,
-    pub steps: u32,
     pub draw_in_progress: bool,
     pub active_player: u8,
     pub n_players: u8,
@@ -39,7 +38,6 @@ pub struct PrivateState {
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Game {
     completed: bool,
-    steps: u32,
     draw_in_progress: bool,
     active_player: u8,
     n_players: u8,
@@ -73,7 +71,6 @@ impl Game {
 
         let gme = Self {
             completed: false,
-            steps: 0,
             draw_in_progress: false,
             active_player: 0,
             n_players,
@@ -86,7 +83,6 @@ impl Game {
 
         let public_state = PublicState {
             completed: gme.completed,
-            steps: 0,
             draw_in_progress: gme.draw_in_progress,
             active_player: gme.active_player,
             n_players: gme.n_players,
@@ -173,8 +169,6 @@ impl Game {
             }
         }
 
-        self.steps += 1;
-
         if !self.draw_in_progress {
             loop {
                 self.active_player = (self.active_player + 1) % self.n_players;
@@ -218,7 +212,6 @@ impl Game {
 
         let public_state = PublicState {
             completed: self.completed,
-            steps: self.steps,
             draw_in_progress: self.draw_in_progress,
             active_player: self.active_player,
             n_players: self.n_players,
