@@ -31,6 +31,7 @@ pub struct PublicState {
 
 #[derive(Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PrivateState {
+    pub is_active: bool,
     pub hand: [u8; 10],
     pub deck_top: Option<u8>,
 }
@@ -94,6 +95,7 @@ impl Game {
         let mut private_states: Vec<PrivateState> = vec![];
         for i in 0..n_players {
             private_states.push(PrivateState {
+                is_active: i == 0,
                 hand: *gme.hands.get(&i).unwrap(),
                 deck_top: None,
             });
@@ -223,6 +225,7 @@ impl Game {
         let mut private_states: Vec<PrivateState> = vec![];
         for i in 0..self.n_players {
             private_states.push(PrivateState {
+                is_active: i == public_state.active_player,
                 hand: *self.hands.get(&i).unwrap(),
                 deck_top: match self.draw_in_progress && i == active_player {
                     true => Some(self.deck.top().unwrap()),
