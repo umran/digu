@@ -185,8 +185,11 @@ impl Game {
 
         // if the deck has run out, transfer pile to deck and shuffle
         if self.deck.is_empty() {
+            // preserve pile top
+            let pile_top = self.pile.deal().unwrap();
             self.deck = Stack::new(self.pile.dump());
             self.deck.shuffle();
+            self.deck.stack(pile_top);
         }
 
         // check win condition
