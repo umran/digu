@@ -189,7 +189,7 @@ impl Game {
             let pile_top = self.pile.deal().unwrap();
             self.deck = Stack::new(self.pile.dump());
             self.deck.shuffle();
-            self.deck.stack(pile_top);
+            self.pile.stack(pile_top);
         }
 
         // check win condition
